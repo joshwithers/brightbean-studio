@@ -423,6 +423,8 @@ Facebook and Instagram share the same Meta app credentials. Threads runs on the 
    ```
    {APP_URL}/social-accounts/callback/threads/
    ```
+   In the same panel set **Uninstall Callback URL** to `{APP_URL}/social-accounts/threads/deauthorize/` and **Delete Callback URL** to `{APP_URL}/social-accounts/threads/delete/`. Run database migrations before registering these endpoints. They verify Meta's signed request against the matching Threads app secret and remove that account's stored connection, account-specific posts, analytics and inbox records. Shared posts retain their other platform targets; content already published on Threads is not deleted. Deletion requests return a private status URL and confirmation code. Repeated callbacks cannot remove a later reconnection.
+
    Then copy the **Threads App ID** and **Threads App Secret** (also listed under **App settings → Basic**, alongside — and different from — your Facebook App ID) and set:
    ```
    PLATFORM_THREADS_APP_ID=your-threads-app-id

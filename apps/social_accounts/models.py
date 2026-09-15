@@ -309,6 +309,19 @@ class SocialAccount(models.Model):
         return icons.get(self.platform, self.platform[:2])
 
 
+class ThreadsCallbackReceipt(models.Model):
+    """Completed callback receipt, without a user ID or signed request payload.
+
+    Created atomically with deletion, so retries cannot delete a later
+    reconnection. The random ID is also the user's deletion-status receipt.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    request_digest = models.CharField(max_length=64, unique=True)
+    action = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class MastodonAppRegistration(models.Model):
     """Stores per-instance OAuth app registrations for Mastodon federation."""
 

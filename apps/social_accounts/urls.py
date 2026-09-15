@@ -1,10 +1,15 @@
 from django.urls import path
 
-from . import views
+from . import threads_callbacks, views
 
 app_name = "social_accounts"
 
 urlpatterns = [
+    path("threads/deauthorize/", threads_callbacks.deauthorize, name="threads_deauthorize"),
+    path("threads/delete/", threads_callbacks.delete_data, name="threads_delete"),
+    path(
+        "threads/deletion-status/<uuid:receipt_id>/", threads_callbacks.deletion_status, name="threads_deletion_status"
+    ),
     # Workspace-scoped views
     path(
         "<uuid:workspace_id>/",
