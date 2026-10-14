@@ -26,6 +26,7 @@ REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 ACCOUNTS_API = "https://mybusinessaccountmanagement.googleapis.com/v1"
 BUSINESS_INFO_API = "https://mybusinessbusinessinformation.googleapis.com/v1"
 POSTS_API = "https://mybusiness.googleapis.com/v4"
+LOCATION_READ_MASK = "name,title,storefrontAddress,phoneNumbers"
 
 
 class GoogleBusinessProvider(SocialProvider):
@@ -194,6 +195,7 @@ class GoogleBusinessProvider(SocialProvider):
             "GET",
             f"{BUSINESS_INFO_API}/{account_id}/locations",
             access_token=access_token,
+            params={"readMask": LOCATION_READ_MASK},
         )
         data = resp.json()
         locations = data.get("locations", [])
@@ -203,6 +205,15 @@ class GoogleBusinessProvider(SocialProvider):
                 platform=self.platform_name,
             )
         return locations[0]["name"]
+
+    @staticmethod
+    def _post_parent(account_id: str, location_id: str) -> str:
+        """Bridge v1 location names to the v4 local-post resource path."""
+        if location_id.startswith("accounts/"):
+            return location_id
+        if not location_id.startswith("locations/"):
+            location_id = f"locations/{location_id}"
+        return f"{account_id}/{location_id}"
 
     # ------------------------------------------------------------------
     # Profile
@@ -216,6 +227,7 @@ class GoogleBusinessProvider(SocialProvider):
             "GET",
             f"{BUSINESS_INFO_API}/{account_id}/locations",
             access_token=access_token,
+            params={"readMask": LOCATION_READ_MASK},
         )
         data = resp.json()
         locations = data.get("locations", [])
@@ -254,6 +266,7 @@ class GoogleBusinessProvider(SocialProvider):
 
         account_id = self._get_account_id(access_token)
         location_id = self._get_location_id(access_token, account_id)
+        parent = self._post_parent(account_id, location_id)
 
         # Determine topic type
         topic_type = content.extra.get("topic_type", "STANDARD")
@@ -278,7 +291,7 @@ class GoogleBusinessProvider(SocialProvider):
 
         resp = self._request(
             "POST",
-            f"{POSTS_API}/{location_id}/localPosts",
+            f"{POSTS_API}/{parent}/localPosts",
             access_token=access_token,
             json=body,
         )
