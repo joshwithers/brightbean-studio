@@ -16,8 +16,13 @@
     <div class="overflow-y-auto pr-1">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for value, label in platform_choices %}
-        <div class="relative bg-white rounded-xl border border-stone-200 p-5 transition-all duration-200 {% if value in configured_platforms %}{% else %}opacity-60{% endif %}">
+        <div class="relative bg-white rounded-xl border border-stone-200 p-5 transition-all duration-200 {% if value in configured_platforms or value == 'youtube' %}{% else %}opacity-60{% endif %}">
             <div class="flex items-start gap-4">
+                {% if value == "youtube" %}
+                <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center">
+                    {% include "partials/_youtube_icon.html" %}
+                </div>
+                {% else %}
                 <!-- Platform icon -->
                 <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
                     {% if value == 'facebook' %}bg-blue-50 text-blue-600
@@ -37,6 +42,7 @@
                     {% include "social_accounts/partials/_platform_icon.html" with platform=value size="5" %}
                 </div>
 
+                {% endif %}
                 <div class="flex-1 min-w-0">
                     <h3 class="text-sm font-semibold text-stone-900">{{ label }}</h3>
                     <p class="text-xs text-stone-400 mt-0.5">
@@ -75,7 +81,7 @@
             </div>
             {% endif %}
 
-            {% if value not in configured_platforms %}
+            {% if value not in configured_platforms and value != 'youtube' %}
             <div class="absolute inset-0 rounded-xl bg-white/40 cursor-not-allowed" title="Platform credentials not configured. Contact your administrator."></div>
             {% endif %}
         </div>
