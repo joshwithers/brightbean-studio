@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import logging
+import subprocess
+import tempfile
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import urlencode
 
 from .base import SocialProvider
@@ -296,6 +299,40 @@ class MastodonProvider(SocialProvider):
 
     def _upload_media(self, access_token: str, file_path: str) -> str:
         """Upload a media file and return its media ID."""
+        # Older instances can accept AVIF uploads but fail while generating
+        # thumbnails. Convert only the upload copy; keep the library original.
+        if Path(file_path).suffix.lower() == ".avif":
+            with tempfile.TemporaryDirectory(prefix="mastodon-media-") as directory:
+                compatible_path = str(Path(directory) / "image.jpg")
+                try:
+                    subprocess.run(
+                        [
+                            "ffmpeg",
+                            "-v",
+                            "error",
+                            "-nostdin",
+                            "-y",
+                            "-protocol_whitelist",
+                            "file,pipe",
+                            "-i",
+                            file_path,
+                            "-frames:v",
+                            "1",
+                            "-q:v",
+                            "2",
+                            compatible_path,
+                        ],
+                        check=True,
+                        capture_output=True,
+                        timeout=30,
+                    )
+                except (OSError, subprocess.SubprocessError) as exc:
+                    raise PublishError(
+                        "Could not convert this AVIF image for Mastodon. Upload a JPEG or PNG copy.",
+                        platform=self.platform_name,
+                        retryable=False,
+                    ) from exc
+                return self._upload_media(access_token, compatible_path)
         with open(file_path, "rb") as f:
             resp = self._request(
                 "POST",
