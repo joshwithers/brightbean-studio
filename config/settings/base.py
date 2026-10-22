@@ -539,7 +539,11 @@ PLATFORM_CREDENTIALS_FROM_ENV = {
     },
     # Google platforms - YouTube and Google Business Profile share the same OAuth client
     "youtube": _GOOGLE_CREDENTIALS,
-    "google_business": _GOOGLE_CREDENTIALS,
+    "google_business": {
+        **_GOOGLE_CREDENTIALS,
+        "account_id": env("PLATFORM_GOOGLE_BUSINESS_ACCOUNT_ID", default=""),
+        "location_id": env("PLATFORM_GOOGLE_BUSINESS_LOCATION_ID", default=""),
+    },
     "pinterest": {
         "app_id": env("PLATFORM_PINTEREST_APP_ID", default=""),
         "app_secret": env("PLATFORM_PINTEREST_APP_SECRET", default=""),

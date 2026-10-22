@@ -103,6 +103,14 @@ def _resolve_publish_credentials(account):
             )
     elif platform == "facebook":
         credentials["page_id"] = account.account_platform_id
+    elif platform == "google_business":
+        location = account.account_platform_id
+        if location.startswith("locations/") or "/locations/" in location:
+            # Publish to the connected listing, even if the deployment's
+            # default target or Google's location ordering later changes.
+            credentials["location_id"] = location
+            if "/locations/" in location:
+                credentials["account_id"] = location.split("/locations/", 1)[0]
     elif platform in ("instagram", "instagram_login"):
         credentials["ig_user_id"] = account.account_platform_id
         if platform == "instagram":

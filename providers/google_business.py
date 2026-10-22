@@ -220,17 +220,29 @@ class GoogleBusinessProvider(SocialProvider):
     # ------------------------------------------------------------------
 
     def get_profile(self, access_token: str) -> AccountProfile:
-        """Fetch the Google Business account and primary location info."""
+        """Fetch the configured location, or the account's primary location."""
         account_id = self._get_account_id(access_token)
 
-        resp = self._request(
-            "GET",
-            f"{BUSINESS_INFO_API}/{account_id}/locations",
-            access_token=access_token,
-            params={"readMask": LOCATION_READ_MASK},
-        )
-        data = resp.json()
-        locations = data.get("locations", [])
+        if self.credentials.get("location_id"):
+            # The configured publishing target must also be the connected
+            # profile. Listing every location and taking the first one can
+            # otherwise display a different business from the one we post to.
+            location_id = str(self.credentials["location_id"]).rstrip("/").rsplit("/", 1)[-1]
+            resp = self._request(
+                "GET",
+                f"{BUSINESS_INFO_API}/locations/{location_id}",
+                access_token=access_token,
+                params={"readMask": LOCATION_READ_MASK},
+            )
+            locations = [resp.json()]
+        else:
+            resp = self._request(
+                "GET",
+                f"{BUSINESS_INFO_API}/{account_id}/locations",
+                access_token=access_token,
+                params={"readMask": LOCATION_READ_MASK},
+            )
+            locations = resp.json().get("locations", [])
 
         if locations:
             loc = locations[0]
@@ -276,6 +288,9 @@ class GoogleBusinessProvider(SocialProvider):
             "summary": content.text or "",
             "topicType": topic_type,
         }
+
+        if content.link_url:
+            body["callToAction"] = {"actionType": "LEARN_MORE", "url": content.link_url}
 
         # Attach media
         if content.media_urls:
