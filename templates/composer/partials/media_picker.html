@@ -11,6 +11,7 @@ Context: assets, workspace, post (optional).
          hx-post="{% url 'composer:attach_media' workspace_id=workspace.id post_id=post.id %}"
          {% else %}
          hx-post="{% url 'composer:attach_pending_media' workspace_id=workspace.id %}"
+         hx-include="[name='_autosave_post_id']"
          {% endif %}
          hx-vals='{"media_asset_id": "{{ asset.id }}"}'
          hx-target="#media-list"

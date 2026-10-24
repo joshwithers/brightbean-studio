@@ -2252,8 +2252,26 @@ def attach_media(request, workspace_id, post_id):
 @login_required
 @require_POST
 def attach_pending_media(request, workspace_id):
-    """Attach a library media asset as pending (before post is saved)."""
+    """Attach library media to the current autosaved draft, or keep it pending."""
     workspace = _get_workspace(request, workspace_id)
+
+    # A library picker loaded for a new composer can outlive its first
+    # autosave. Resolve the current draft at click time, including when its
+    # picker HTML was loaded before that autosave completed.
+    post_id = request.POST.get("_autosave_post_id", "").strip()
+    if post_id:
+        if not _is_valid_uuid(post_id):
+            return JsonResponse({"error": "Invalid autosaved post ID"}, status=400)
+        post = get_object_or_404(Post, id=post_id, workspace=workspace)
+        membership = request.workspace_membership
+        perms = membership.effective_permissions if membership else {}
+        if not perms.get("create_posts") or (post.author != request.user and not perms.get("edit_others_posts")):
+            raise PermissionDenied("You do not have permission to edit this post.")
+        readonly_error = _readonly_rejection(request, post)
+        if readonly_error is not None:
+            return readonly_error
+        return attach_media(request, workspace_id, post.pk)
+
     media_asset_id = request.POST.get("media_asset_id")
 
     if not media_asset_id:
